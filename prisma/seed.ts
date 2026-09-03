@@ -1,0 +1,1 @@
+import {PrismaClient} from "@prisma/client"; import {boostSeed} from "../src/lib/boosts"; const p=new PrismaClient(); async function main(){for(const b of boostSeed)await p.boostPackage.upsert({where:{id:b.id},update:b,create:b})}main().finally(()=>p.$disconnect());

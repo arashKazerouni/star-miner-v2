@@ -1,0 +1,2 @@
+export type PaymentCandidate={assetType:string;destination:string;memo:string|null;amountStroops:bigint;hash:string};
+export function paymentMatches(candidate:PaymentCandidate, expected:{asset:string;destination:string;memo:string;amountStroops:bigint}){return candidate.assetType===expected.asset&&candidate.destination===expected.destination&&candidate.memo===expected.memo&&candidate.amountStroops===expected.amountStroops}

@@ -1,0 +1,69 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "sqlite"; url = env("DATABASE_URL") }
+
+enum PaymentStatus { PENDING DETECTED CONFIRMED MISMATCH EXPIRED }
+enum BoostStatus { ACTIVE EXPIRED }
+
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  passwordHash String
+  balanceStroops BigInt @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  mining MiningState?
+  payments Payment[]
+  boosts UserBoost[]
+}
+model MiningState {
+  userId String @id
+  baseRateStroopsPerHour BigInt @default(24000)
+  accruedStroops BigInt @default(0)
+  lastUpdatedAt DateTime @default(now())
+  isMining Boolean @default(false)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+model BoostPackage {
+  id String @id
+  name String
+  description String
+  priceStroops BigInt
+  multiplierBps Int
+  durationHours Int
+  active Boolean @default(true)
+  payments Payment[]
+  boosts UserBoost[]
+}
+model Payment {
+  id String @id @default(cuid())
+  userId String
+  boostPackageId String
+  expectedStroops BigInt
+  receivedStroops BigInt?
+  asset String @default("XLM")
+  destination String
+  memo String @unique
+  stellarTransactionHash String? @unique
+  status PaymentStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  confirmedAt DateTime?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  boostPackage BoostPackage @relation(fields: [boostPackageId], references: [id])
+  boost UserBoost?
+  @@index([userId, status])
+}
+model UserBoost {
+  id String @id @default(cuid())
+  userId String
+  boostPackageId String
+  paymentId String @unique
+  multiplierBps Int
+  startedAt DateTime
+  expiresAt DateTime
+  status BoostStatus @default(ACTIVE)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  boostPackage BoostPackage @relation(fields: [boostPackageId], references: [id])
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  @@index([userId, status, expiresAt])
+}
